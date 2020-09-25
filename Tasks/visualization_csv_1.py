@@ -4,24 +4,29 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import math
 
+def get_world_co2_emission_data(dataset):
+    return dataset.query("Country == 'World'")
 
-def count_age(test_dataset, survived_dataset):
-    """Return count of passangers. Key is an age of person."""
-    return dict(Counter([round(value) for value in test_dataset.Age if not math.isnan(value)]))
+def get_europe_co2_emission_data(dataset):
+    return dataset.query("Country == ['France','United Kingdom','Spain','Italy','Germany', 'Russia']")
 
+def show_co2_emission(data):
+    plt.plot()
 
-def show_count_age():
-    test_dataset = pd.read_csv("../datasets/co2_emission.csv")
-    survived_dataset = pd.read_csv("../datasets/co2_emission.csv")
+    fig, ax = plt.subplots()
 
-    age_count = count_age(test_dataset, survived_dataset)
+    ax.plot(data['Year'], data['value'])
+    ax.set(xlabel='Year', ylabel='CO2 emission value',
+           title='CO2 emission in Europe')
+    ax.grid()
 
-    plt.xlabel('Age')
-    plt.ylabel('Count')
-
-    plt.scatter(age_count.keys(), age_count.values(), c='blue')
+    fig.savefig("europe.png")
     plt.show()
 
+co2_emission_dataset = pd.read_csv("../datasets/co2_emission.csv")
+co2_emission_dataset = co2_emission_dataset.rename(columns={'Entity':'Country', 'Annual CO₂ emissions (tonnes )':'value'})
 
 if __name__ == '__main__':
-    show_count_age()
+    show_co2_emission(
+        get_world_co2_emission_data(co2_emission_dataset)
+    )
