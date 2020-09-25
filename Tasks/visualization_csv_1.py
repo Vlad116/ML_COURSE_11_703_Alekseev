@@ -1,8 +1,5 @@
-from collections import Counter
-
 import pandas as pd
 import matplotlib.pyplot as plt
-import math
 
 def get_world_co2_emission_data(dataset):
     return dataset.query("Country == 'World'")
