@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def dist(x1, y1, x2, y2):
-    return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+    return np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
 
 def clust(x, y, x_cc, y_cc, k, points_count):
     cluster = []
@@ -33,14 +33,13 @@ def calculate_center_of_mass(cluster, x, y, k):
 
     return [center_of_mass_x, center_of_mass_y]
 
-
 def clusterSum(k,x,y,x_cc,y_cc,cluster):
     result = 0
     for i in range(0,k):
-        result=0
+        result = 0
         for j in range(0,len(cluster)):
-            if(cluster[j]==i):
-                result+=dist(x[j],y[j],x_cc[i],y_cc[i])**2
+            if(cluster[j] == i):
+                result += dist(x[j],y[j],x_cc[i],y_cc[i]) ** 2
     return result
 
 def show_dependence_wcss_on_numbrer_of_clusters(wcss, K):
@@ -54,6 +53,7 @@ def main():
     # кол-во точек
     points_count = 200
     # k - кол-во кластеров в данной задаче range и выбираем оптимальный потом
+    K = range(0, 10)
     x = np.random.randint(1, 100, points_count)
     y = np.random.randint(1, 100, points_count)
 
@@ -63,48 +63,83 @@ def main():
     def calculate_R():
         R = 0
         for i in range(0, points_count):
-            if (dist(x_c, y_c, x[i], y[i]) > R):
-                R = dist(x_c, y_c, x[i], y[i])
+            r = dist(x_c, y_c, x[i], y[i])
+            if (r > R):
+                R = r
+        return R
 
     R = calculate_R()
 
     k_values = []
-    K = 8
+    # K = 8
 
-    for k in range (0,K):
+    for k in K:
         x_cc = [R * np.cos(2 * np.pi * i / k) + x_c for i in range(k)]
         y_cc = [R * np.sin(2 * np.pi * i / k) + x_c for i in range(k)]
 
-        cluster = clust(x, y, x_cc, y_cc, k,points_count)
-        center_of_mass = calculate_center_of_mass(cluster, x, y, k)
-        changed = False
-        while not changed:
-            new_cluster = clust(x, y, center_of_mass[0], center_of_mass[1], k, points_count)
-            if np.array_equal(new_cluster, cluster):
-                change = True
-                print(k)
-                k_values.append(clusterSum(k,x,y,x_cc,y_cc,cluster))
-                print(k_values)
-                break
-            cluster = new_cluster
-            center_of_mass = calculate_center_of_mass(cluster, x, y, k)
+    print(x_cc)
+    print(y_cc)
+    cluster = clust(x, y, x_cc, y_cc, k,points_count)
 
-    k = 3
+    center_of_mass = calculate_center_of_mass(cluster, x, y, k)
+    # Сравниваем текущее расположение точек и новое рассчитанное
     changed = False
     while not changed:
-        new_cluster = clust(x,y,center_of_mass[0], center_of_mass[1], k, points_count)
+        new_cluster = clust(x, y, center_of_mass[0], center_of_mass[1], k, points_count)
+        k_values.append(clusterSum(k,x,y,x_cc,y_cc,cluster))
+        if np.array_equal(new_cluster, cluster):
+            changed = True
+            break
+        cluster = new_cluster
+        center_of_mass = calculate_center_of_mass(cluster, x, y, k)
+
+    print(k_values)
+
+    plt.plot(K[0:len(k_values)], k_values)
+    plt.xlabel("Number of clusters")
+    plt.ylabel("WCSS")
+    plt.show()
+
+    k = len(k_values) - 1
+    changed = False
+    while not changed:
+        new_cluster = clust(x,y,center_of_mass[0],center_of_mass[1],k,points_count)
         if np.array_equal(new_cluster,cluster):
-            change = True
+            changed = True
             break
 
         cluster = new_cluster
+        center_of_mass = calculate_center_of_mass(cluster,x,y,k)
 
-        center_of_mass = calculate_center_of_mass(cluster, x, y, k)
+    colors = ['r','b','y','o','p']
+    print(k)
 
-    x_c = np.mean(x)
-    y_c = np.mean(y)
+    print("clusters")
+    for i in range(0,points_count):
+        print(cluster[i])
+        print(colors[cluster[i]])
 
-    wcss = []
-    show_dependence_wcss_on_numbrer_of_clusters(k_values, K)
+        # print(colors[cluster[i]])
+        # color = colors[cluster[i]]
+        plt.scatter(x[i],y[i], c=colors[cluster[i]])
+        plt.scatter(center_of_mass[0], center_of_mass[1], marker='o', c='b',s=250)
+    plt.show()
+    # k = 3
+    # changed = False
+    # while not changed:
+    #     new_cluster = clust(x,y,center_of_mass[0], center_of_mass[1], k, points_count)
+    #     if np.array_equal(new_cluster,cluster):
+    #         change = True
+    #         break
+    #
+    #     cluster = new_cluster
+    #
+    #     center_of_mass = calculate_center_of_mass(cluster, x, y, k)
+
+    # x_c = np.mean(x)
+    # y_c = np.mean(y)
+    #
+    # wcss = []
+    # show_dependence_wcss_on_numbrer_of_clusters(k_values, K)
 
 if __name__ == '__main__': main()
