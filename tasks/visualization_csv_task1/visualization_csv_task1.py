@@ -20,7 +20,7 @@ def show_co2_emission(data):
     fig.savefig("europe.png")
     plt.show()
 
-co2_emission_dataset = pd.read_csv("../datasets/co2_emission.csv")
+co2_emission_dataset = pd.read_csv("../../datasets/co2_emission.csv")
 co2_emission_dataset = co2_emission_dataset.rename(columns={'Entity':'Country', 'Annual CO₂ emissions (tonnes )':'value'})
 
 if __name__ == '__main__':

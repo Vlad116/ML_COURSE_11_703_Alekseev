@@ -51,6 +51,7 @@ def show_dependence_wcss_on_numbrer_of_clusters(wcss, K):
 def main():
 
     # кол-во точек
+    global x_cc, y_cc
     points_count = 200
     # k - кол-во кластеров в данной задаче range и выбираем оптимальный потом
     K = range(0, 10)
@@ -71,7 +72,6 @@ def main():
     R = calculate_R()
 
     k_values = []
-    # K = 8
 
     for k in K:
         x_cc = [R * np.cos(2 * np.pi * i / k) + x_c for i in range(k)]
@@ -80,8 +80,8 @@ def main():
     print(x_cc)
     print(y_cc)
     cluster = clust(x, y, x_cc, y_cc, k,points_count)
-
     center_of_mass = calculate_center_of_mass(cluster, x, y, k)
+
     # Сравниваем текущее расположение точек и новое рассчитанное
     changed = False
     while not changed:
@@ -100,7 +100,9 @@ def main():
     plt.ylabel("WCSS")
     plt.show()
 
-    k = len(k_values) - 1
+    print(len(k_values) - 1)
+    k = 3
+
     changed = False
     while not changed:
         new_cluster = clust(x,y,center_of_mass[0],center_of_mass[1],k,points_count)
@@ -111,35 +113,12 @@ def main():
         cluster = new_cluster
         center_of_mass = calculate_center_of_mass(cluster,x,y,k)
 
-    colors = ['r','b','y','o','p']
+    colors = ['r','b','y']
     print(k)
-
     print("clusters")
     for i in range(0,points_count):
-        print(cluster[i])
-        print(colors[cluster[i]])
-
-        # print(colors[cluster[i]])
-        # color = colors[cluster[i]]
         plt.scatter(x[i],y[i], c=colors[cluster[i]])
-        plt.scatter(center_of_mass[0], center_of_mass[1], marker='o', c='b',s=250)
+        plt.scatter(center_of_mass[0], center_of_mass[1], marker='*', c='green',s=200)
     plt.show()
-    # k = 3
-    # changed = False
-    # while not changed:
-    #     new_cluster = clust(x,y,center_of_mass[0], center_of_mass[1], k, points_count)
-    #     if np.array_equal(new_cluster,cluster):
-    #         change = True
-    #         break
-    #
-    #     cluster = new_cluster
-    #
-    #     center_of_mass = calculate_center_of_mass(cluster, x, y, k)
-
-    # x_c = np.mean(x)
-    # y_c = np.mean(y)
-    #
-    # wcss = []
-    # show_dependence_wcss_on_numbrer_of_clusters(k_values, K)
 
 if __name__ == '__main__': main()
