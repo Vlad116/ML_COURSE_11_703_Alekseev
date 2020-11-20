@@ -1,120 +1,81 @@
 import matplotlib.pyplot as plt
-import matplotlib.colors as colorsq
 import numpy as np
-
+import seaborn as sns
+import pandas as pd
 
 def distance(x1, y1, x2, y2):
     return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
-
 n = 200
-eps, min_pts = 5, 3
-color_list = []
-
-colors = ['lavenderblush', 'blue', 'green', 'cyan', 'magenta', 'yellow', 'black', 'darkmagenta', 'darkorange', 'maroon',
-          'pink', 'crimson', 'lime', 'red', 'gray', 'olive', 'dodgerblue', 'skyblue', 'orangered', 'sienna', 'olive']
+eps, minPts = 7, 3
 
 x = [np.random.randint(1, 100) for i in range(n)]
 y = [np.random.randint(1, 100) for i in range(n)]
-flags = []
 
-for i in range(0, n):
-    neighbours_count = -1
-    for j in range(0, n):
-        if distance(x[i], y[i], x[j], y[j]) <= eps:
-            neighbours_count += 1
-    if neighbours_count >= min_pts:
-        flags.append('g')
-    else:
-        flags.append('lavenderblush')
-for i in range(0, n):
-    if flags[i] == 'lavenderblush':
+# colors = ['lavenderblush', 'blue', 'green', 'cyan', 'magenta', 'yellow', 'black', 'darkmagenta', 'darkorange', 'maroon',
+#           'pink', 'crimson', 'lime', 'red', 'gray', 'olive', 'dodgerblue', 'skyblue', 'orangered', 'sienna', 'olive']
+
+def draw_flags(flags):
+    for i in range(0,n):
+        plt.scatter(x[i],y[i], color=flags[i])
+    plt.show()
+
+def draw_clusters(clusters):
+    df = pd.DataFrame(columns={'x', 'y', 'clusters'})
+    df['x'] = [x[i] for i in range(n) if clusters[i] != 0]
+    df['y'] = [y[i] for i in range(n) if clusters[i] != 0]
+    df['clusters'] = [clusters[i] for i in range(n) if clusters[i] != 0]
+    x_r = [x[i] for i in range(n) if clusters[i] == 0]
+    y_r = [y[i] for i in range(n) if clusters[i] == 0]
+    facet = sns.lmplot(data=df, x='x', y='y', hue='clusters',
+                       fit_reg=False, legend=True, legend_out=True)
+    plt.scatter(x_r, y_r, c='r')
+
+def DBModel(x, y, n, eps, minPts):
+    # хранение цветов
+    flags = []
+
+    for i in range(0, n):
+        # количество соседей, -1 потому что считает себя
+        neighb = -1
         for j in range(0, n):
-            if flags[j] == 'g':
-                if distance(x[i], y[i], x[j], y[j]) <= eps:
+            if distance(x[i], y[i], x[j], y[j]) < eps:
+                neighb += 1
+        if neighb >= minPts:
+            flags.append('g')
+        else:
+            flags.append('b')
+
+    draw_flags(flags)
+
+    for i in range(n):
+        if flags[i] == 'b':
+            for j in range(n):
+                if flags[j] == 'g' and distance(x[i], y[i], x[j], y[j]) < eps:
                     flags[i] = 'y'
-cluster = []
-for i in range(n):
-    cluster.append(0)
-c = 1
+                    break
+        if flags[i] == 'b':
+            flags[i] = 'r'
 
-for i in range(0, n):
-    if flags[i] == 'g':
-        for j in range(0, n):
-            if distance(x[i], y[i], x[j], y[j]) <= eps:
+    draw_flags(flags)
+
+    clusters = np.zeros(n)
+    cl = 1
+
+    for i in range(n):
+        if flags[i] == 'g':
+            if clusters[i] == 0:
+                clusters[i] = cl
+                cl += 1
+            for j in range(n):
+                d = distance(x[i], y[i], x[j], y[j])
                 if flags[j] == 'g':
-                    if cluster[i] == 0 and cluster[j] == 0:
-                        cluster[i] = c
-                        cluster[j] = c
-                        c += 1
-                    elif cluster[i] == 0 and cluster[j] != 0:
-                        cluster[i] = cluster[j]
-                    elif cluster[j] == 0 and cluster[i] != 0:
-                        cluster[j] = cluster[i]
-                    elif cluster[i] != 0 and cluster[j] != 0:
-                        if cluster[i] < cluster[j]:
-                            cluster[j] = cluster[i]
-                        else:
-                            cluster[i] = cluster[j]
-                elif flags[j] == 'y':
-                    if cluster[i] == 0:
-                        cluster[i] = c
-                        c += 1
+                    if d < eps:
+                        clusters[j] = clusters[i]
+                if flags[j] == 'y':
+                    if d < eps and d == min(distance(x[j], y[j], x[k], y[k]) for k in range(n) if flags[k] == 'y'):
+                        clusters[j] = clusters[i]
+    return clusters
 
-for i in range(0, n):
-    if flags[i] == 'y':
-        for j in range(0, n):
-            if flags[j] == 'g':
-                if distance(x[i], y[i], x[j], y[j]) <= eps and cluster[j] != 0:
-                    cluster[i] = cluster[j]
-
-for i in range(n):
-    color_list.append(colors[cluster[i]])
-
-for i in range(0, n):
-    plt.scatter(x[i], y[i], color=flags[i])
-plt.show()
-
-for i in range(0, n):
-    plt.scatter(x[i], y[i], color=color_list[i])
-plt.show()
-
-
-# import matplotlib.pyplot as plt
-# import numpy as np
-#
-# def dist(x1,y1,x2,y2):
-#     return np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
-#
-# n = 500
-# eps, minPts = 5,3
-# x = np.random.randint(1,100,n)
-# y = np.random.randint(1,100,n)
-# flags = []
-#
-# for i in range (0,n):
-#     # кол-во соседей
-#     neighb = 0
-#     for j in range(0, n):
-#         # если расстояние меньше эпсилон, добавляем соседа
-#         if dist(x[i], y[i],x[j],y[j]) < eps:
-#             neighb += 1
-#     # если соседи
-#     if neighb >= minPts:
-#         flags.append('g')
-#     else:
-#         flags.append('r')
-#
-# for i in range(0,n):
-#     if flags[i] != 'g':
-#         for j in range(0,n):
-#             if flags[j] == 'g':
-#                 if dist(x[i], y[i], x[j], y[j]) < eps:
-#                     flags[i] = 'y'
-#     plt.scatter(x[i],y[i], color=flags[i])
-# plt.show()
-# clusters = []
-# cl = 1
-#
-# # for i in range (0,n):
-# #     for j in range(i,n):
+clusters = DBModel(x, y, n, eps, minPts)
+draw_clusters(clusters)
