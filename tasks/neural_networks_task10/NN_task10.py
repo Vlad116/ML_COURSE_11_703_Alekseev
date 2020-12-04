@@ -131,21 +131,21 @@ def cnn_digits_predict(model, image_file):
     return result[0]
 
 if __name__ == '__main__':
-    # рисуем цифру
-    draw_and_save_number()
+    # Рисуем цифру
+    # draw_and_save_number()
     # Создание модели
-    model = mnist_cnn_model()
+    # model = mnist_cnn_model()
     # Тренируем модель
-    mnist_cnn_train(model)
-    # сохраняем обученную модель
-    model.save('cnn_digits_28x28.h5')
-    # загружаем обученную модель
+    # mnist_cnn_train(model)
+    # Сохраняем обученную модель
+    # model.save('cnn_digits_28x28.h5')
+    # Загружаем обученную модель
     model = tf.keras.models.load_model('cnn_digits_28x28.h5')
 
     # тест на своих картинках
     print(cnn_digits_predict(model, 'digit.png'))
-    print(cnn_digits_predict(model,'digit_1.png'))
-    print(cnn_digits_predict(model, 'digit_2.png'))
     print(cnn_digits_predict(model, 'digit_3.png'))
     print(cnn_digits_predict(model, 'digit_8.png'))
-    print(cnn_digits_predict(model, 'digit_9.png'))
+    # print(cnn_digits_predict(model,'digit_1.png'))
+    # print(cnn_digits_predict(model, 'digit_2.png'))
+    # print(cnn_digits_predict(model, 'digit_9.png'))
