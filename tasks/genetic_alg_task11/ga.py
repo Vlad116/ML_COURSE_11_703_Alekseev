@@ -1,51 +1,168 @@
-import numpy
+import numpy as np, \
+    matplotlib.pyplot as pyplot
 
-# В этом проекте используется десятичное представление хромосомы
-def calculate_population_fitness(equation_inputs, pop):
-    # Вычисление значения пригодности каждого решения в текущей популяции.
-    # Фитнес-функция вычисляет сумму произведений между каждым входом и его соответствующим весом.
-    fitness = numpy.sum(pop*equation_inputs, axis=1)
-    return fitness
+class Population():
+    def __init__(self, bag, matr):
+        self.bag = bag
+        self.parents = []
+        self.score = 0
+        self.best = None
+        self.matr = matr
 
-def select_mating_pool(pop, fitness, num_parents):
-    # Выбор лучших особей текущего поколения в качестве родителей для производства потомства следующего поколения.
-    parents = numpy.empty((num_parents, pop.shape[1]))
+def init_population(cities, matr, n_population):
+    return Population(
+        np.asarray([np.random.permutation(cities) for _ in range(n_population)]),
+        matr
+    )
 
-    for parent_num in range(num_parents):
-        max_fitness_idx = numpy.where(fitness == numpy.max(fitness))
-        max_fitness_idx = max_fitness_idx[0][0]
-        parents[parent_num, :] = pop[max_fitness_idx, :]
-        fitness[max_fitness_idx] = -99999999999
+def fitness(self, gen):
+    return sum(
+        [
+            self.matr[gen[i], gen[i + 1]]
+            for i in range(len(gen) - 1)
+        ]
+    )
 
-    return parents
+def evaluate(self):
+    distances = np.asarray(
+        [self.fitness(gen) for gen in self.bag]
+    )
+    self.score = np.min(distances)
+    self.best = self.bag[distances.tolist().index(self.score)]
+    self.parents.append(self.best)
+    if False in (distances[0] == distances):
+        distances = np.max(distances) - distances
+    return distances / np.sum(distances)
 
-def crossover(parents, offspring_size):
-    offspring = numpy.empty(offspring_size)
-    # Точка, в которой происходит кроссовер между двумя родителями. Обычно она находится в центре
-    crossover_point = numpy.uint8(offspring_size[1]/2)
+def select(self, k=4):
+    fit = self.evaluate()
+    while len(self.parents) < k:
+        idx = np.random.randint(0, len(fit))
+        if fit[idx] > np.random.rand():
+            self.parents.append(self.bag[idx])
+    self.parents = np.asarray(self.parents)
 
-    for k in range(offspring_size[0]):
-        # Индекс первого сопряженного родителя.
-        parent1_idx = k % parents.shape[0]
-        # Индекс второго родителя для спаривания.
-        parent2_idx = (k+1) % parents.shape[0]
-        # У нового потомства первая половина генов будет взята от первого родителя.
-        offspring[k, 0:crossover_point] = parents[parent1_idx, 0:crossover_point]
-        # У нового потомства будет вторая половина генов, взятых у второго родителя.
-        offspring[k, crossover_point:] = parents[parent2_idx, crossover_point:]
+def swap(gen):
+    a, b = np.random.choice(len(gen), 2)
+    gen[a], gen[b] = (
+        gen[b],
+        gen[a],
+    )
+    return gen
 
-    return offspring
+def crossover(self, p_cross=0.1):
+    children = []
+    count, size = self.parents.shape
+    for _ in range(len(self.bag)):
+        if np.random.rand() > p_cross:
+            children.append(
+                list(self.parents[np.random.randint(count, size=1)[0]])
+            )
+        else:
+            parent1, parent2 = self.parents[
+                               np.random.randint(count, size=2), :
+                               ]
+            idx = np.random.choice(range(size), size=2, replace=False)
+            start, end = min(idx), max(idx)
+            child = [None] * size
+            for i in range(start, end + 1, 1):
+                child[i] = parent1[i]
+            pointer = 0
+            for i in range(size):
+                if child[i] is None:
+                    while parent2[pointer] in child:
+                        pointer += 1
+                    child[i] = parent2[pointer]
+            children.append(child)
+    return children
 
-def mutation(offspring_crossover, num_mutations=1):
-    mutations_counter = numpy.uint8(offspring_crossover.shape[1] / num_mutations)
+# Мутация изменяет количество генов, как определено аргументом num_mutations.
+# Изменения случайны.
+def mutate(self, p_cross=0.4, p_mut=0.2):
+    next_bag = []
+    children = self.crossover(p_cross)
+    for child in children:
+        if np.random.rand() < p_mut:
+            next_bag.append(swap(child))
+        else:
+            next_bag.append(child)
+    return next_bag
 
-    # Мутация изменяет количество генов, как определено аргументом num_mutations. Изменения случайны.
-    for idx in range(offspring_crossover.shape[0]):
-        gene_idx = mutations_counter - 1
-        for mutation_num in range(num_mutations):
-            # Случайное значение, добавляемое к гену.
-            random_value = numpy.random.uniform(-1.0, 1.0, 1)
-            offspring_crossover[idx, gene_idx] = offspring_crossover[idx, gene_idx] + random_value
-            gene_idx = gene_idx + mutations_counter
+# Сам алгоритм
+def genetic_algorithm(
+        cities,
+        matr,
+        n_population=800,
+        n_iter=200,
+        selectivity=0.2,
+        p_cross=0.5,
+        p_mut=0.2,
+        print_interval=200,
+        return_history=False,
+        verbose=False,
+):
+    pop = init_population(cities, matr, n_population)
+    best = pop.best
+    score = float("inf")
+    history = []
 
-    return offspring_crossover
+    for i in range(n_iter):
+        pop.select(n_population * selectivity)
+        history.append(pop.score)
+        if verbose:
+            print(f"Поколение {i}: Расстояние: {pop.score}")
+        elif i % print_interval == 0:
+            print(f"Поколение {i}: Расстояние: {pop.score}")
+        if pop.score < score:
+            best = pop.best
+            score = pop.score
+        children = pop.mutate(p_cross, p_mut)
+        pop = Population(children, pop.matr)
+
+    if return_history:
+        return best, history
+
+    print('\n')
+    print("Кратчайший путь:")
+    return best
+
+def show_plot(best_outputs):
+    pyplot.plot(best_outputs)
+    pyplot.xlabel("Итерации")
+    pyplot.ylabel("Расстояние")
+    pyplot.show()
+
+# Решение задачи нахождения кратчайшего пути через все пункты
+# при момощи генетического алгоритма
+if __name__ == '__main__':
+
+    cities = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+    matr = np.zeros([len(cities), len(cities)])
+    best_outputs = []
+
+    for i in range(len(cities)):
+        for j in range(len(cities)):
+            matr[i][j] = matr[j][i] = np.random.randint(50, 100)
+            if (i == j):
+                matr[i][j] = 0
+
+    print(matr)
+    print('\n')
+
+    pop = init_population(cities, matr, 5)
+
+    Population.fitness = fitness
+    Population.evaluate = evaluate
+
+    Population.select = select
+    pop.select()
+
+    pop.parents
+
+    Population.crossover = crossover
+    Population.mutate = mutate
+    pop.mutate()
+
+    best_result = genetic_algorithm(cities,matr,verbose=True)
+    print(best_result)
